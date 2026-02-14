@@ -285,7 +285,16 @@ def test_proxy_throttle():
     assert th.get_ident(request) == "8.8.8.8"
 
     settings.NUM_PROXIES = 1
-    assert th.get_ident(request) == "127.0.0.1"
+    assert th.get_ident(request) == "8.8.8.8"
+
+    request = build_request(x_forwarded_for="8.8.8.8, 89.212.66.133, 127.0.0.1")
+    settings.NUM_PROXIES = 2
+    assert th.get_ident(request) == "8.8.8.8"
+
+    # Protect against client-supplied X-Forwarded-For header (client is really 8.8.8.8)
+    request = build_request(x_forwarded_for="1.2.3.4,8.8.8.8,89.212.66.133,127.0.0.1")
+    settings.NUM_PROXIES = 2
+    assert th.get_ident(request) == "8.8.8.8"
 
     settings.NUM_PROXIES = None
 
